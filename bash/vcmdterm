@@ -1,0 +1,14 @@
+#!/bin/bash
+cmd="$1"
+title="${2/:/-}"
+
+SESSION_NAME="mcm-$title"
+
+#if type -a tmux &>/dev/null ; then
+#  tmux -2 new-session -d -s "$SESSION_NAME"
+#  tmux send-keys -t "$SESSION_NAME" "$cmd\n"
+#  tmux -2 attach-session -t "$SESSION_NAME"
+#else
+  xterm -geometry 80x25 -title "$title" -e $cmd
+#fi
+
