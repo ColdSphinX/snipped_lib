@@ -1,0 +1,25 @@
+[global_config]
+  enabled_plugins = CustomCommandsMenu, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, MavenPluginURLHandler, LaunchpadBugURLHandler
+[keybindings]
+  go_up = <Primary>Up
+  broadcast_group = <Primary>b
+  broadcast_all = <Primary><Shift>b
+  go_down = <Primary>Down
+  go_right = <Primary>Right
+  broadcast_off = <Alt>b
+  go_left = <Primary>Left
+[profiles]
+  [[default]]
+    custom_command = /usr/bin/tmux
+    background_image = None
+    visible_bell = True
+    scrollback_infinite = True
+[layouts]
+  [[default]]
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+    [[[window0]]]
+      type = Window
+      parent = ""
+[plugins]
