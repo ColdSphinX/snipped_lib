@@ -5,20 +5,20 @@ shopt -s extglob
 
 PROMPT_DIRTRIM=3
 PSPOST='>'
-PSUSR='\e[1;32m\u\e[m'
+PSUSR="\[\e[1;32m\]\u\[\e[m\]"
 if [[ $UID -eq 0 ]]; then
   PSPOST='#'
-  PSUSR='\e[1;31m\u\e[m'
+  PSUSR="\[\e[1;31m\]\u\[\e[m\]"
 fi
 case $HOSTNAME in
   ${WORKSTATIONS})
-    PSHOST='\e[1;32m\h\e[m'
+    PSHOST='\[\e[1;32m\]\h\[\e[m\]'
     ;;
   ${TESTSERVERS})
-    PSHOST='\e[1;33m\h\e[m'
+    PSHOST='\[\e[1;33m\]\h\[\e[m\]'
     ;;
   *)
-    PSHOST='\e[1;31m\h\e[m'
+    PSHOST='\[\e[1;31m\]\h\[\e[m\]'
     ;;
 esac
 function _ps_pipestatus() {
@@ -41,14 +41,14 @@ function _ps_pipestatus() {
 function _ps_exitcode() {
   if [[ "$1" == "0" ]]; then
     if $_ps_differ ; then
-      echo -e '\e[1;32m'$PSPOST'\e[m'
+      echo -e "\e[1;32m$PSPOST\e[m"
     else
-      echo -e '\e[1;37m'$PSPOST'\e[m'
+      echo -e "\e[1;37m$PSPOST\e[m"
     fi
   elif ! $_ps_differ ; then
-    echo -e '\e[1;33m'$PSPOST'\e[m'
+    echo -e "\e[1;33m$PSPOST\e[m"
   else
-    echo -e '\e[1;31m'$PSPOST'\e[m'
+    echo -e "\e[1;31m$PSPOST\e[m"
   fi
 }
 function _ps_cmd() {
@@ -76,8 +76,8 @@ function _ps_cmd() {
 
   _ps_last=$_ps_current
 }
-PS1="$PSUSR@$PSHOST:\e[1;34m\w\e[m\$(_ps_exitcode \$(_ps_pipestatus)) "
-PS2='$(_ps_exitcode $(_ps_pipestatus)) '
+PS1="$PSUSR@$PSHOST:\[\e[1;34m\]\w\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\] "
+PS2='\[$(_ps_exitcode $(_ps_pipestatus))\] '
 PS3=$(echo -en "\e[1;34m$PSPOST\e[m ")
 export PS4='$(if [[ "$?" == "0" ]]; then echo -e "\e[1;32m$0:$LINENO\e[m($?)+" ; else echo -e "\e[1;31m$0:$LINENO\e[m($?)+" ; fi) '
 PROMPT_COMMAND='_ps_cmd'
