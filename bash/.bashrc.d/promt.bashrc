@@ -1,5 +1,6 @@
-# Definition examples:
 shopt -s extglob
+
+# Definition examples:
 #WORKSTATIONS='@(work1|workmobile)'
 #TESTSERVERS='@(test0|testA)'
 
