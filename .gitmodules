@@ -2,3 +2,6 @@
 	path = hostmux
 	url = git@github.com:ColdSphinX/hostmux.git
 	branch = stable
+[submodule "tmux/.tmux/plugins/tmux-sessionist"]
+	path = tmux/.tmux/plugins/tmux-sessionist
+	url = https://github.com/tmux-plugins/tmux-sessionist.git
