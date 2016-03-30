@@ -1,3 +1,5 @@
+export HISTTIMEFORMAT='%F_%T  '
+
 shopt -s extglob
 
 # Definition examples:
@@ -42,19 +44,19 @@ function _ps_pipestatus() {
 function _ps_exitcode() {
   if [[ "$1" == "0" ]]; then
     if $_ps_differ ; then
-      echo -e "\e[1;32m$PSPOST\e[m"
+      echo -en "\e[1;32m"
     else
-      echo -e "\e[1;37m$PSPOST\e[m"
+      echo -en "\e[1;37m"
     fi
   elif ! $_ps_differ ; then
-    echo -e "\e[1;33m$PSPOST\e[m"
+    echo -en "\e[1;33m"
   else
-    echo -e "\e[1;31m$PSPOST\e[m"
+    echo -en "\e[1;31m"
   fi
 }
 function _ps_cmd() {
   local pst=(${PIPESTATUS[@]})
-  local cmd=$(history 1 | sed 's/^.[[:space:]]*\([^[:space:]]\)/\1/')
+  local cmd=$(history 1 | sed 's/^.[[:blank:]]*[[:digit:]]*  [[:digit:]:_-]\{19\}  //')
   _ps_current=$(history 1 | awk '{print $1}')
   _ps_differ=false
   local fail=false
@@ -74,11 +76,25 @@ function _ps_cmd() {
       echo -e "\e[0;33m<${cmd}> returned: ${pst[@]}\e[m"
     fi
   fi
-
   _ps_last=$_ps_current
+  _ps_branch=$(git branch 2>/dev/null | grep ^\* | awk '{print $2}' | tr -d '\n')
+  if [[ $UID -eq 0 ]]; then
+    PSPOST='#'
+  else
+    PSPOST='>'
+  fi
 }
-PS1="$PSUSR@$PSHOST:\[\e[1;34m\]\w\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\] "
-PS2='\[$(_ps_exitcode $(_ps_pipestatus))\] '
+function _ps_git() {
+  if [[ -n "$_ps_branch" ]]; then
+    case $_ps_branch in
+      master) echo -en "\e[1;31m" ;;
+      *test*) echo -en "\e[1;33m" ;;
+      *) echo -en "\e[1;32m" ;;
+    esac
+  fi
+}
+PS1="$PSUSR@$PSHOST:\[\e[1;34m\]\w\[\e[m\]:\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
+PS2="\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
 PS3=$(echo -en "\e[1;34m$PSPOST\e[m ")
 export PS4='$(if [[ "$?" == "0" ]]; then echo -e "\e[1;32m$0:$LINENO\e[m($?)+" ; else echo -e "\e[1;31m$0:$LINENO\e[m($?)+" ; fi) '
 PROMPT_COMMAND='_ps_cmd'
