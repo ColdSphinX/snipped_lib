@@ -13,6 +13,14 @@ if [[ $UID -eq 0 ]]; then
   PSPOST='#'
   PSUSR="\[\e[1;31m\]\u\[\e[m\]"
 fi
+if _ssh_incoming ; then
+  if _ssh_workstation ; then
+    PSRHOST='\[\e[1;33m\]'
+  else
+    PSRHOST='\[\e[1;31m\]'
+  fi
+  PSRHOST=$PSRHOST$(_ssh_incoming -v -s)'\[\e[m\]->'
+fi
 case $HOSTNAME in
   ${WORKSTATIONS})
     PSHOST='\[\e[1;32m\]\h\[\e[m\]'
@@ -24,6 +32,46 @@ case $HOSTNAME in
     PSHOST='\[\e[1;31m\]\h\[\e[m\]'
     ;;
 esac
+function _ssh_incoming() {
+  local verbose=false
+  local short=false
+  [[ "$1" == "-v" ]] && verbose=true
+  [[ "$2" == "-s" ]] && short=true
+  if [[ -n "$SSH_CONNECTION" ]]; then
+    local remoteip=$(echo $SSH_CONNECTION | awk '{print $1}')
+    local remotehost=$remoteip
+    if host $remoteip &>/dev/null ; then
+      remotehost=$(LANG=C host $remoteip 2>&1 | sed 's/^.*pointer \(.*\)./\1/')
+      # take the first host; if you want to add filters, do it here
+      remotehost=$(egrep -o '^[^[:space:]]*' <(echo $remotehost))
+      $short && remotehost=$(sed 's/^\([^\.]*\)\..*$/\1/' <(echo $remotehost))
+    fi
+  fi
+  if [[ -n "$remotehost" ]]; then
+    $verbose && echo $remotehost
+    return 0
+  else
+    $verbose && hostname
+    return 1
+  fi
+}
+function _ssh_workstation() {
+  local verbose=false
+  [[ "$1" == "-v" ]] && verbose=true
+  local remotehost=$HOSTNAME
+  if _ssh_incoming ; then
+    remotehost=$(_ssh_incoming -v -s)
+  fi
+  $verbose && echo $remotehost
+  case $remotehost in
+    ${WORKSTATIONS})
+      return 0
+    ;;
+    *)
+      return 1
+    ;;
+  esac
+}
 function _ps_pipestatus() {
   local pst=(${PIPESTATUS[@]})
   local fail=false
@@ -56,7 +104,7 @@ function _ps_exitcode() {
 }
 function _ps_cmd() {
   local pst=(${PIPESTATUS[@]})
-  local cmd=$(history 1 | sed 's/^.[[:blank:]]*[[:digit:]]*  [[:digit:]:_-]\{19\}  //')
+  local cmd=$(history 1 | sed -e 's/^.[[:blank:]]*[[:digit:]]*  [[:digit:]:_-]\{19\}  //' -e 's/\([^[:space:]]\)[[:space:]]*$/\1/')
   _ps_current=$(history 1 | awk '{print $1}')
   _ps_differ=false
   local fail=false
@@ -93,7 +141,7 @@ function _ps_git() {
     esac
   fi
 }
-PS1="$PSUSR@$PSHOST:\[\e[1;34m\]\w\[\e[m\]:\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
+PS1="$PSUSR@$PSRHOST$PSHOST:\[\e[1;34m\]\w\[\e[m\]:\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
 PS2="\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
 export PS3=$(echo -en "\e[1;34m$PSPOST\e[m ")
 export PS4='$(if [[ "$?" == "0" ]]; then echo -e "\e[1;32m$0:$LINENO\e[m($?)+" ; else echo -e "\e[1;31m$0:$LINENO\e[m($?)+" ; fi) '
