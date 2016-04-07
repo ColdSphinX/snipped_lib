@@ -146,4 +146,5 @@ PS2="\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\
 export PS3=$(echo -en "\e[1;34m$PSPOST\e[m ")
 export PS4='$(if [[ "$?" == "0" ]]; then echo -e "\e[1;32m$0:$LINENO\e[m($?)+" ; else echo -e "\e[1;31m$0:$LINENO\e[m($?)+" ; fi) '
 PROMPT_COMMAND='_ps_cmd'
+# vi: syntax=sh ts=2
 

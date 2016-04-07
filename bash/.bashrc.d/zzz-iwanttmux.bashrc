@@ -1,6 +1,13 @@
 # only continue if in an interactive shell
 [[ $- != *i* ]] && return 0
 
+if [[ "$HOSTNAME" != "${worklaptop}" ]]; then
+  .sysinfo
+fi
+if [[ -n "$TMUX" ]] ; then
+  echo -e "\e[0;37m[Press <Ctrl+Q D> to detach session]\e[m" >&2
+fi
+
 # don't continue if you are in a screen session!
 [[ $TERM =~ ^screen ]] && return 0
 
@@ -11,15 +18,31 @@ which tmux &>/dev/null || return 0
 if [[ -z "$TMUX" ]] ; then
   # get the id of a deattached session
   ID="`tmux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
-  if [[ -z "$ID" ]] ; then
+  if ! _ssh_workstation ; then
+    tmux new-session
+  elif [[ -n "$BYOBU_BACKEND" ]] ; then
+    true
+  elif type -a byobu &>/dev/null ; then
+    byobu
+  elif [[ -z "$ID" ]] ; then
     # if not available create a new one
     tmux new-session
   else
     # if available attach to it
     tmux attach-session -t "$ID"
   fi
-  # exit shell immediadly after closing/detaching the tmux session
-  # as long as you are not logged in as root
-  [ $UID -ne 0 ] && exit
+  if [[ -z "$BYOBU_BACKEND" ]] ; then
+    if ! _ssh_workstation ; then
+      exit
+    elif [[ $UID -ne 0 ]]; then
+      exit
+    elif ( type -a byobu &>/dev/null ) ; then
+      if [[ ! -e /root/.notmux ]]; then
+        exit
+      fi
+    fi
+  fi
 fi
+
+# vi: syntax=sh ts=2
 
