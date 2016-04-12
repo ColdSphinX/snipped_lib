@@ -168,7 +168,7 @@ alias :x=' exit'
 alias cd..='cd ..'
 
 alias ,bashrc=". $HOME/.bashrc"
-alias ,bashrced="vim $HOME/.bashrc"
+alias ,bashrced="$EDITOR $HOME/.bashrc"
 
 function cl() {
   dir=$1
