@@ -23,3 +23,6 @@
 [submodule "vim/.swvim"]
 	path = vim/.swvim
 	url = git@github.com:ColdSphinX/swvim.git
+[submodule "vim/neovim"]
+	path = vim/neovim
+	url = https://github.com/neovim/neovim

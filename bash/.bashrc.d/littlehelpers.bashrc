@@ -301,6 +301,26 @@ DEFGEMS
   fi
 }
 
+function .install-neovim-user() {
+  cd ~/tmp/ || return 1
+  [[ -d neovim ]] && rm -rf neovim
+  git clone https://github.com/neovim/neovim neovim || return 1
+  cd neovim || return 1
+  cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$HOME/nvim -DENABLE_JEMALLOC=ON || return 1
+  make || return 1
+  make install
+}
+
+function .install-neovim-system() {
+  cd ~/tmp/ || return 1
+  [[ -d neovim ]] && rm -rf neovim
+  git clone https://github.com/neovim/neovim neovim || return 1
+  cd neovim || return 1
+  cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_JEMALLOC=ON || return 1
+  make || return 1
+  make install
+}
+
 function .jwsconsole() {
   jnlp=$(echo $HOME/Downloads/*.jnlp | grep -v '\*\.jnlp' | tail -n 1)
   if [ "x$jnlp" != "x" ]; then
