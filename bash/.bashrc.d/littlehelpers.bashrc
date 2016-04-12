@@ -331,7 +331,7 @@ function .jwsconsole() {
 }
 
 function in_path() {
-  PATHA=($(echo $PATH | sed 's/:/ /g'))
+  local PATHA=($(echo $PATH | sed 's/:/ /g'))
   local found=false
   local checkpath=false
   if [[ "$1" == "-p" ]]; then
