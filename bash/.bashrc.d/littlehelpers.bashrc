@@ -169,6 +169,7 @@ alias cd..='cd ..'
 
 alias ,bashrc=". $HOME/.bashrc"
 alias ,bashrced="$EDITOR $HOME/.bashrc"
+alias .showvars="(env | egrep -v '(PS4|HISTTIMEFORMAT)' ; set) | grep --color=always '^[a-zA-Z0-9]*=' | sort -u"
 
 function cl() {
   dir=$1
