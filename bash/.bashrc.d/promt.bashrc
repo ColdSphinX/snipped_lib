@@ -75,6 +75,7 @@ function _ssh_workstation() {
 function _ps_pipestatus() {
   local pst=(${PIPESTATUS[@]})
   local fail=false
+  local x=''
   for x in ${pst[@]}
   do
     if [[ $x -ne 0 ]]; then
@@ -113,6 +114,7 @@ function _ps_cmd() {
 
   if [[ "$_ps_current" != "$_ps_last" ]]; then
     _ps_differ=true
+    local x=''
     for x in ${pst[@]}
     do
       if [[ $x -ne 0 ]]; then

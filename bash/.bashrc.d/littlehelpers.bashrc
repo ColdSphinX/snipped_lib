@@ -1,6 +1,45 @@
 if [ -d ${HOME}/.rbenv/bin ]; then
-  export PATH="${PATH}:${HOME}/.rbenv/bin"
+  # prevent doublications in the PATH
+  export PATH=${PATH/${HOME}\/.rbenv\/shims:/}
+  if ! (echo $PATH | grep -q "${HOME}/.rbenv/bin"); then
+    export PATH="${PATH}:${HOME}/.rbenv/bin"
+  fi
   eval "$(rbenv init -)"
+  # and now, force the added path on the possition _I_ want in PATH and not the one they want.
+  # below /usr/local/bin !
+  path_a=($(echo $PATH | sed 's/:/ /g'))
+  shims=-1
+  usrlocal=-1
+  # find the 2 positions, no need to break...there aren't that many entrys and this way we can solve both in one loop.
+  for ((ii=0;ii<${#path_a[@]};ii++))
+  do
+    if [[ "${path_a[$ii]}" = "$HOME/.rbenv/shims" ]]; then
+      shims=$ii
+    fi
+    if [[ "${path_a[$ii]}" = "/usr/local/bin" ]]; then
+      usrlocal=$ii
+    fi
+  done
+  if ! [[ $shims -lt 0 || $usrlocal -lt 0 ]]; then
+    # a lazy bubbesort like loop
+    if [[ $shims -lt $usrlocal ]]; then
+      cache=""
+      for ((ii=$shims;ii<$usrlocal;ii++))
+      do
+        cache="${path_a[$ii]}"
+        path_a[$ii]="${path_a[$(($ii+1))]}"
+        path_a[$(($ii+1))]="$cache"
+      done
+    fi
+  fi
+  export PATH=$(echo "${path_a[@]}" | sed 's/ /:/g')
+  unset path_a cache ii shims usrlocal
+fi
+if ! (echo $PATH | grep -q "$HOME/bin"); then
+  export PATH="$HOME/bin:$PATH"
+fi
+if ! (echo $PATH | grep -q "$HOME/sbin"); then
+  export PATH="$HOME/sbin:$PATH"
 fi
 
 function devoffile() {
@@ -42,14 +81,61 @@ function _has_bin() {
 }
 
 function calc() {
-  if _has_bin calc ; then
-    $(_bin calc) "$*" | _strip
+  if in_path calc ; then
+    $(in_path -p calc) "$*" | _strip
   else
     echo "$*" | bc -l
   fi
 }
 
+function _run_with_nvim() {
+  local cmd="$1"
+  shift
+  if in_path "$cmd" ; then
+    if [[ "$1" == "-e" ]]; then
+    shift
+      if in_path nvim ; then
+        $(in_path -p nvim) "term://$cmd $*"
+      else
+        $(in_path -p "$cmd") $*
+      fi
+    else
+      $(in_path -p "$cmd") $*
+    fi
+  else
+    echo "Please install $cmd" >&2
+  fi
+}
+function htop() {
+  _run_with_nvim htop $*
+}
+function mtr() {
+  local param="-n -4 -t"
+  if [[ "$1" == "-e" ]]; then
+    param="-e $param"
+    shift
+  fi
+  _run_with_nvim mtr $param $*
+}
+
+
 if [[ $- =~ i ]]; then
+
+
+if type -a nvim &>/dev/null ; then
+  export EDITOR=nvim
+  alias vim=nvim
+  alias vi=nvim
+elif type -a vim &>/dev/null ; then
+  export EDITOR=vim
+  alias vi=vim
+elif type -a nano &>/dev/null ; then
+  export EDITOR=nano
+elif type -a vi &>/dev/null ; then
+  export EDITOR=vi
+elif type -a emacs &>/dev/null ; then
+  export EDITOR=emacs
+fi
 
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -224,7 +310,37 @@ function .jwsconsole() {
   fi
 }
 
-export EDITOR=vim
+PATHA=($(echo $PATH | sed 's/:/ /g'))
+function in_path() {
+  local found=false
+  local checkpath=false
+  if [[ "$1" == "-p" ]]; then
+    checkpath=true
+    shift
+  fi
+  local file=$(basename "$1")
+  local dir=$(dirname "$1")
+  if [[ "$dir" != "." ]]; then
+    checkpath=true
+    if ! (echo "$dir" | grep -q '^/'); then
+      dir="$PWD/$dir"
+    fi
+  fi
+  dir=$(echo "$dir" | sed 's_//_/_g')
+  for ((i=0;i<${#PATHA[@]};i++))
+  do
+    if [[ -x "${PATHA[$i]}/$file" ]]; then
+      found=true
+      if $checkpath; then
+        if [[ "${PATHA[$i]}" != "$dir" ]]; then
+          echo "${PATHA[$i]}/$file"
+        fi
+      fi
+      break
+    fi
+  done
+  $found
+}
 
 fi
 # vi: syntax=sh ts=2
