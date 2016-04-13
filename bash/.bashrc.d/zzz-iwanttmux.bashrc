@@ -18,7 +18,10 @@ which tmux &>/dev/null || return 0
 if [[ -z "$TMUX" ]] ; then
   # get the id of a deattached session
   TID="`tmux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
-  WID="`wemux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
+  if type -a wemux &>/dev/null ; then
+    wemux j $USER &>/dev/null
+    WID="`wemux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
+  fi
   if ! _ssh_workstation ; then
     if type -a wemux &>/dev/null ; then
       wemux new-session -s "$(_ssh_incoming -v -s)"
@@ -26,9 +29,25 @@ if [[ -z "$TMUX" ]] ; then
       tmux new-session -s "$(_ssh_incoming -v -s)"
     fi
   elif [[ -n "$BYOBU_BACKEND" ]] ; then
-    true
+    if type -a wemux &>/dev/null ; then
+      if ! (wemux l | grep -q '^No wemux servers currently active\.') &>/dev/null ; then
+        WEMUX_SRVS="$(wemux l | grep '[0-9]*\.' | awk '{print $2}') /bin/bash"
+        select server in $WEMUX_SRVS
+        do
+          case $server in
+          /bin/bash) ;;
+          *)
+            wemux j $server
+            wemux attach
+          ;;
+          esac
+          break
+        done
+      fi
+    fi
   elif type -a byobu &>/dev/null ; then
-    [[ -z "$WID" ]] && echo -e "$(wemux list)\nPlease attach from a plain shell!"
+    (wemux l | grep -q '^No wemux servers currently active\.') &>/dev/null || \
+    echo -e "$(wemux l)\nPlease attach from a plain shell!"
     byobu
   elif [[ -z "$WID" && -z "$TID" ]] ; then
     # if not available create a new one
