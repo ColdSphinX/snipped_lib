@@ -17,19 +17,32 @@ which tmux &>/dev/null || return 0
 # try to attach to an detached tmux session
 if [[ -z "$TMUX" ]] ; then
   # get the id of a deattached session
-  ID="`tmux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
+  TID="`tmux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
+  WID="`wemux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
   if ! _ssh_workstation ; then
-    tmux new-session
+    if type -a wemux &>/dev/null ; then
+      wemux new-session -s "$(_ssh_incoming -v -s)"
+    else
+      tmux new-session -s "$(_ssh_incoming -v -s)"
+    fi
   elif [[ -n "$BYOBU_BACKEND" ]] ; then
     true
   elif type -a byobu &>/dev/null ; then
+    [[ -z "$WID" ]] && echo -e "$(wemux list)\nPlease attach from a plain shell!"
     byobu
-  elif [[ -z "$ID" ]] ; then
+  elif [[ -z "$WID" && -z "$TID" ]] ; then
     # if not available create a new one
-    tmux new-session
-  else
+    if type -a wemux &>/dev/null ; then
+      wemux new-session
+    else
+      tmux new-session
+    fi
+  elif [[ -n "$WID" ]] ; then
     # if available attach to it
-    tmux attach-session -t "$ID"
+    wemux attach-session -t "$WID"
+  elif [[ -n "$TID" ]] ; then
+    # if available attach to it
+    tmux attach-session -t "$TID"
   fi
   if [[ -z "$BYOBU_BACKEND" ]] ; then
     if ! _ssh_workstation ; then

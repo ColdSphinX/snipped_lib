@@ -26,3 +26,6 @@
 [submodule "vim/neovim"]
 	path = vim/neovim
 	url = https://github.com/neovim/neovim
+[submodule "tmux/wemux"]
+	path = tmux/wemux
+	url = https://github.com/zolrath/wemux.git
