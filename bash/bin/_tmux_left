@@ -1,0 +1,14 @@
+#!/bin/sh
+
+function distro() {
+  if [ -f /etc/issue.net ]; then
+    sed 's_GNU/Linux __' /etc/issue.net
+  elif [ -f /etc/issue ]; then
+    sed 's_GNU/Linux __' /etc/issue
+  else
+    uname -so
+  fi
+}
+
+echo "$(distro) $(arch)"
+
