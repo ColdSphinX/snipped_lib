@@ -44,4 +44,5 @@ let g:airline_theme='solarized'
 "autocmd VimEnter * silent! call Tmuxline Tmuxline airline
 "autocmd VimEnter * silent! call Tmuxline Tmuxline
 let g:airline#extensions#tmuxline#enabled = 0
+let g:airline#extensions#tabline#buffer_nr_show = 1
 
