@@ -45,4 +45,20 @@ let g:airline_theme='solarized'
 "autocmd VimEnter * silent! call Tmuxline Tmuxline
 let g:airline#extensions#tmuxline#enabled = 0
 let g:airline#extensions#tabline#buffer_nr_show = 1
+"call togglebg#map("<F10>")
+
+set t_Co=256
+let g:solarized_termcolors=256
+syntax enable
+set background=light
+colorscheme solarized
+
+nnoremap <silent> <F3> :bp<CR>
+nnoremap <silent> <F4> :bn<CR>
+nnoremap <F2> :ls<CR>:b
+nnoremap <silent> <F5> :wincmd k<CR>
+nnoremap <silent> <F6> :wincmd j<CR>
+nnoremap <silent> <F7> :wincmd h<CR>
+nnoremap <silent> <F8> :wincmd l<CR>
+
 
