@@ -1,18 +1,23 @@
 [global_config]
-  enabled_plugins = CustomCommandsMenu, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, MavenPluginURLHandler, LaunchpadBugURLHandler
+  enabled_plugins = InactivityWatch, CustomCommandsMenu, ActivityWatch, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, MavenPluginURLHandler, LaunchpadBugURLHandler, ClonedSplittingMenu
 [keybindings]
   go_up = <Primary>Up
-  broadcast_group = <Primary>b
-  broadcast_all = <Primary><Shift>b
+  broadcast_group = <Primary><Shift>F10
+  broadcast_all = <Primary><Shift>F12
   go_down = <Primary>Down
   go_right = <Primary>Right
-  broadcast_off = <Alt>b
+  broadcast_off = <Primary><Shift>F9
   go_left = <Primary>Left
 [profiles]
   [[default]]
-    custom_command = /usr/bin/tmux
-    background_image = None
+    palette = "#000000:#cd0000:#00cd00:#cdcd00:#1e90ff:#cd00cd:#00cdcd:#e5e5e5:#4c4c4c:#ff0000:#00ff00:#ffff00:#4682b4:#ff00ff:#00ffff:#ffffff"
     visible_bell = True
+    background_image = None
+    custom_command = /usr/bin/tmux
+    use_system_font = False
+    foreground_color = "#839496"
+    font = DejaVu Sans Mono for Powerline 10
+    background_color = "#002b36"
     scrollback_infinite = True
 [layouts]
   [[default]]

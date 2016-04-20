@@ -29,3 +29,9 @@
 [submodule "tmux/wemux"]
 	path = tmux/wemux
 	url = https://github.com/zolrath/wemux.git
+[submodule "terminator/camillo_plugins"]
+	path = terminator/camillo_plugins
+	url = git@github.com:camillo/TerminatorPlugins.git
+[submodule "terminator/ilgarm_plugins"]
+	path = terminator/ilgarm_plugins
+	url = git@github.com:ilgarm/terminator_plugins.git
