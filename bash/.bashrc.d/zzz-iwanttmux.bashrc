@@ -24,9 +24,15 @@ if [[ -z "$TMUX" ]] ; then
   fi
   if ! _ssh_workstation ; then
     if type -a wemux &>/dev/null ; then
-      wemux new-session -s "$(_ssh_incoming -v -s)"
+      if ( type -a wemux &>/dev/null && [[ "$USER" == "$me" ]] ); then
+        select session in wemux tmux
+        do
+          break
+        done
+      fi
+      ${session:-wemux} new-session -s "$(_ssh_incoming -v -s)_$!"
     else
-      tmux new-session -s "$(_ssh_incoming -v -s)"
+      tmux new-session -s "$(_ssh_incoming -v -s)_$!"
     fi
   elif [[ -n "$BYOBU_BACKEND" ]] ; then
     if type -a wemux &>/dev/null ; then
@@ -35,13 +41,13 @@ if [[ -z "$TMUX" ]] ; then
         select server in $WEMUX_SRVS
         do
           case $server in
-          /bin/bash) ;;
+          "/bin/bash") break ;;
           *)
             wemux j $server
-            wemux attach
+            wemux
+            exit
           ;;
           esac
-          break
         done
       fi
     fi
