@@ -1,6 +1,8 @@
 # only continue if in an interactive shell
 [[ $- != *i* ]] && return 0
 
+USEWEMUX=false
+
 if [[ "$HOSTNAME" != "${worklaptop}" ]]; then
   .sysinfo
 fi
@@ -22,7 +24,7 @@ if [[ -z "$TMUX" ]] ; then
     wemux j $USER &>/dev/null
     WID="`wemux ls 2>/dev/null | grep -vm1 attached | cut -d: -f1`"
   fi
-  if ! _ssh_workstation ; then
+  if ( $USEWEMUX && ! _ssh_workstation ) ; then
     if type -a wemux &>/dev/null ; then
       if ( type -a wemux &>/dev/null && [[ "$USER" == "$me" ]] ); then
         select session in wemux tmux
