@@ -1,3 +1,22 @@
+SH=$(basename $0)
+case $SH in
+  bash|dash)
+    ARSTART=0
+    export HOST=$HOSTNAME
+  ;;
+  zsh)
+    ARSTART=1
+    export HOSTNAME=$HOST
+    alias shopt=':'
+    alias _expand=_bash_expand
+    alias _complete=_bash_comp
+    autoload colors && colors
+    emulate -L sh
+    setopt kshglob noshglob braceexpand
+  ;;
+esac
+
+export PATH=${PATH/$HOME\/bin:/}
 if [ -d ${HOME}/.rbenv/bin ]; then
   # prevent doublications in the PATH
   export PATH=${PATH/${HOME}\/.rbenv\/shims:/}
@@ -11,13 +30,13 @@ if [ -d ${HOME}/.rbenv/bin ]; then
   shims=-1
   usrlocal=-1
   # find the 2 positions, no need to break...there aren't that many entrys and this way we can solve both in one loop.
-  for ((ii=0;ii<${#path_a[@]};ii++))
+  for ((ii=$ARSTART;ii<${#path_a[@]};ii++))
   do
     if [[ "${path_a[$ii]}" = "$HOME/.rbenv/shims" ]]; then
       shims=$ii
     fi
     if [[ "${path_a[$ii]}" = "/usr/local/bin" ]]; then
-      usrlocal=$ii
+      usrlocal=$(($ii - 1))
     fi
   done
   if ! [[ $shims -lt 0 || $usrlocal -lt 0 ]]; then
@@ -118,6 +137,10 @@ function mtr() {
   _run_with_nvim mtr $param $*
 }
 
+unset rsync_proxy
+if [[ -z "$no_proxy" ]]; then
+  export no_proxy="localhost,127.0.0.1,$HOSTNAME"
+fi
 
 if [[ $- =~ i ]]; then
 
