@@ -92,7 +92,7 @@ case $HOSTNAME in
 esac
 case $SH in
   zsh) PSHOST=$(echo -e "%{\e[${PSHCOL}m%}%m%{\e[m%}") ;;
-  bash|dash)   PSHOST='\[\e[${PSHCOL}m\]$HOSTNAME\[\e[m\]' ;;
+  bash)   PSHOST='\[\e[${PSHCOL}m\]$HOSTNAME\[\e[m\]' ;;
   *)   PSHOST='\[\e[${PSHCOL}m\]$HOSTNAME\[\e[m\]' ;;
 esac
 function _ps_pipestatus() {
@@ -116,8 +116,14 @@ function _ps_pipestatus() {
     return 0
   fi
 }
+
+[[ -z "$_PS_INIT" ]] && _PS_INIT=true
 function _ps_exitcode() {
-  if [[ "$1" == "0" ]]; then
+  local code=$1
+  if [[ "$_ps_last" == "$_ps_first" ]]; then
+    code=0
+  fi
+  if [[ "$code" -eq 0 ]]; then
     echo -en "\e[1;32m"
   else
     echo -en "\e[1;31m"
@@ -134,7 +140,8 @@ function _ps_cmd() {
   _ps_change=false
   local fail=false
 
-  [ -z "$_ps_last" ] && _ps_last=$_ps_current
+  [ -z "$_ps_last" ] && _ps_last="$_ps_current"
+  [ -z "$_ps_last_pst" ] && _ps_last_pst="${pst[@]}"
 
   if [[ "$_ps_current" != "$_ps_last" ]]; then
     _ps_differ=true
@@ -171,14 +178,19 @@ function _ps_cmd() {
     fi
   fi
 
-  _ps_last_pst=${pst[@]}
-  _ps_last=$_ps_current
+  _ps_last_pst="${pst[@]}"
+  _ps_last="$_ps_current"
   _ps_branch=$(git branch 2>/dev/null | grep ^\* | awk '{print $2}' | tr -d '\n')
 
   if [[ $UID -eq 0 ]]; then
     PSPOST='#'
   else
     PSPOST='>'
+  fi
+
+  if $_PS_INIT; then
+    _ps_first="$_ps_current"
+    _PS_INIT=false
   fi
 }
 function _ps_git() {
@@ -216,7 +228,7 @@ function _battery() {
 }
 
 case $SH in
-  bash|dash)
+  bash)
     PS1="$PSUSR@$PSRHOST$PSHOST:\[\e[1;34m\]\w\[\e[m\]:\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
     PS2="\[\$(_ps_git)\]\$_ps_branch\[\e[m\]\[\$(_ps_exitcode \$(_ps_pipestatus))\]\$PSPOST\[\e[m\] "
     PS3=$(echo -en "\e[1;34m$PSPOST\e[m ")

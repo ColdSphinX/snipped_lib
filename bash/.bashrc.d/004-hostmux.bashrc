@@ -1,5 +1,3 @@
-if [[ $- =~ i ]]; then
-
 # add filters as you like
 function u@h {
   for h in $*
@@ -15,6 +13,10 @@ function u@h {
   done
 }
 
+[[ $- != *i* ]] && return 0
+
+true
+
 #export CLUSTERX=(srv-x1 srv-x2 srv-x3)
 #alias .clusterx="hostmux -n -s clusterx $(u@h ${CLUSTERX[@]})"
 
@@ -26,5 +28,5 @@ function u@h {
 # you get the idea :)
 # you could split stage-db/stage-front/stage-backend/stage-all and so on
 
-fi
 # vi: syntax=sh ts=2
+

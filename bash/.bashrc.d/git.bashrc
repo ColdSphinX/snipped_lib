@@ -1,4 +1,61 @@
-if [[ $- =~ i ]]; then
+[[ $- != *i* ]] && return 0
+
+# Git
+# source https://github.com/henrik/dotfiles
+function .mkgit() { 
+  mkdir "$1" && cd "$1" && echo "#$1" >> README.md
+  git init && git add README.md
+  git commit -m "Initialized $1 repo with README.md"
+  echo ">>> Initialized $1 repo with README.md"
+}
+
+# Returns the branch name as a string
+# Restrict to use within other functions
+function __branch(){
+  git branch 2>/dev/null | grep ^\* | awk '{print $2}' | tr -d '\n'
+}
+
+# Automatically prepends branch name to commit
+# Yells at you for using master
+function branch:commit() {
+  branch_name="$(__branch | tr '[:lower:]' '[:upper:]')"
+
+  if [ $branch_name == 'MASTER' ]; then
+    echo ">>> Current branch is master"
+    echo ">>> Please move your changes to the appropriate branch"
+    echo ">>> Aborting commit"
+  else
+    commit_message="$branch_name $@"
+
+    git commit -am"$commit_message"
+  fi
+}
+
+# Inserts branch name into the push command, accepts first argument for push destination
+function branch:push() {
+  branch_name="`__branch`"
+
+  if [ -n "$1" ]; then
+    remote="origin"
+  else
+    remote="$1"
+  fi
+
+  if [ $branch_name == 'master' ]; then
+    echo ">>> Current branch is master"
+    echo ">>> Please move your changes to the appropriate branch"
+    echo ">>> Aborting commit"
+  else
+    git push $remote $branch_name
+  fi
+}
+
+# Copies branch name to clipboard
+function branch:copy(){
+  branch_name=`__branch`;
+  __branch | pbcopy
+  echo "Copied '$branch_name' to the clipboard"
+}
 
 alias .gs="git status"
 alias .gw="git show"
@@ -35,6 +92,5 @@ function .mkgit() {
   echo ">>> Initialized $1 repo with README.md"
 }
 
-fi
 # vi: syntax=sh ts=2
 

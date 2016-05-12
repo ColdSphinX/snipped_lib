@@ -1,6 +1,8 @@
 SH=$(basename $0)
+#[[ "$SHELL" = "/bin/bash" && -z "$BASH_VERSION" ]] && SH=dash
+
 case $SH in
-  bash|dash)
+  bash)
     ARSTART=0
     export HOST=$HOSTNAME
   ;;
@@ -13,6 +15,14 @@ case $SH in
     autoload colors && colors
     emulate -L sh
     setopt kshglob noshglob braceexpand
+  ;;
+  dash)
+    alias source="."
+    ARSTART=0
+    export HOST=$HOSTNAME
+    echo "You really wanna use dash?" >&2
+    echo "Please use bash!" >&2
+    echo "Or kill yourself..." >&2
   ;;
 esac
 
@@ -80,6 +90,7 @@ function devoffile() {
     return 0
   fi
 }
+alias .devoffile=devoffile
 
 function emptythedir() {
   local blank=$(mktemp -d)
@@ -87,9 +98,17 @@ function emptythedir() {
   rm -r $blank
 }
 
+function clear() {
+  echo -ne "\e[m"
+  eval $(_bin clear)
+  echo -n ""
+  printf "\033c"
+}
+
 function _strip() {
   sed 's/[[:space:]]//g'
 }
+
 
 function _bin() {
   type -a $1 | grep "is /" | sed 's_^.* \(/.*\)$_\1_'
@@ -105,6 +124,10 @@ function calc() {
   else
     echo "$*" | bc -l
   fi
+}
+
+function clc() { 
+  echo "$*" | bc -l; 
 }
 
 function _run_with_nvim() {
@@ -149,6 +172,11 @@ if type -a nvim &>/dev/null ; then
   export EDITOR=nvim
   alias vim=nvim
   alias vi=nvim
+  alias ex="nvim -e"
+  alias exim="nvim -E"
+  alias view="nvim -R"
+  alias rvim="nvim -Z"
+  alias rview="nvim -RZ"
 elif type -a vim &>/dev/null ; then
   export EDITOR=vim
   alias vi=vim
@@ -169,6 +197,9 @@ if [ -x /usr/bin/dircolors ]; then
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
+
+    # colored GCC warnings and errors
+    export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 fi
 
 alias ll='ls -l'
@@ -177,11 +208,11 @@ alias l='ls -CF'
 alias lr='ls -lachtr'
 
 alias config_show="grep -E -v '^(|[[:space:]]*#.*)$'"
-alias ,="ssh -l root"
-alias _='mosh --ssh="ssh -X -l root"'
 alias apg="/usr/bin/apg -a 1 -n 10 -m 12 -x 12"
 
 alias hist='history | grep'
+alias ,="ssh -l root"
+alias _='mosh --ssh="ssh -l root"'
 alias psg='ps -Alf | grep'
 
 # failsafe :D
@@ -190,9 +221,11 @@ alias :Q=' exit'
 alias :x=' exit'
 alias cd..='cd ..'
 
-alias ,bashrc=". $HOME/.bashrc"
-alias ,bashrced="$EDITOR $HOME/.bashrc"
+alias ,bashrc="source $HOME/.bashrc"
+alias ,bashrced="$EDITOR $HOME/.bashrc $HOME/.bashrc.d/*.bashrc"
 alias .showvars="(env | egrep -v '^(PS4|PS3|HISTTIMEFORMAT|LS_COLORS|_)=' ; set ) | grep --color=always '^[^[:space:]]*=' | sort -u"
+
+alias docker_attach="docker attach --sig-proxy=false"
 
 function cl() {
   dir=$1
@@ -231,29 +264,6 @@ function extract() {
     fi
 }
 
-function nyancat() {
-  telnet nyancat.dakko.us
-}
-
-function starwars() {
-  telnet towel.blinkenlights.nl
-}
-
-function .sysinfo() {
-  echo "sh: $(readlink -f /bin/sh)"
-  echo "Host: $(hostname -f)"
-  echo "Up:  $(uptime)"
-  echo "Load: $(cat /proc/loadavg)"
-  echo
-  echo "Users:"
-  echo "---"
-  who
-  echo
-  echo "Logins:"
-  echo "---"
-  last -5adFixw
-  echo
-}
 
 function sslchecker() {
   local DOMAIN=$1
@@ -266,92 +276,33 @@ function sslchecker() {
   echo | openssl s_client -CApath /etc/ssl/certs/ -servername $DOMAIN -connect $SERVER:$PORT | openssl x509 -noout -dates
 }
 
-function .ruby-install-system() {
-  local force=false
-  if [ "$1" = "-f" ]; then
-    force=true
-    shift
-  fi
-  local version=$1
-  local major=${version%\.[0-9]}
+[[ $- != *i* ]] && return 0
 
-  if [ $(which ruby | wc -w) -ne 0 ] || $force ; then
-    apt-get update
-    apt-get install -y wget build-essential patch zlib1g-dev libssl-dev libreadline-dev libffi-dev libyaml-dev libffi-dev libpq-dev libyajl-dev libmysqlclient-dev || return 1
-    cd /root/ || return 1
-    local folder="ruby-${version}"
-    local archive="${folder}.tar.gz"
-    [ ! -f "$archive" ] && ( wget "http://ftp.ruby-lang.org/pub/ruby/$major/$archive" || return 1 )
-    [ -f "$archive" -a ! -d "$folder" ] && ( tar xvf $archive || return 1 )
-    cd $folder || return 1
-    ./configure || return 1
-    make || return 1
-    make install || return 1
-    gem install mysql pg --no-ri --no-rdoc || return 1
-    cd ..
-    rm -r $folder $archive
-  fi
+function .nyancat() {
+  telnet nyancat.dakko.us
+  clear
 }
 
-function .ruby-install-user() {
-  local force=false
-  if [ "$1" = "-f" ]; then
-    force=true
-    shift
-  fi
-  local version=$1
-  local major=${version%\.[0-9]}
-  local rbehome="${HOME}/.rbenv"
-
-  echo "ensure that the following packages are installed:" >&2
-  echo "apt-get install -y wget build-essential patch zlib1g-dev libssl-dev libreadline-dev libffi-dev libyaml-dev libffi-dev libpq-dev libyajl-dev libmysqlclient-dev git" >&2
-  read -n1 -r -p "Press <enter> to continue..." key
-  if [ -d "${HOME}/.rbenv" ]; then
-    rbenv install $version
-  else
-    git clone https://github.com/rbenv/rbenv.git "$rbehome"
-    for plugin in ruby-build rbenv-default-gems rbenv-each rbenv-vars
-    do
-      git clone https://github.com/rbenv/${plugin}.git "$rbehome/plugins/$plugin"
-    done
-    cat $rbehome/default-gems <<DEFGEMS
-bundler
-capistrano ~>2.0
-DEFGEMS
-    export PATH="$PATH:$rbehome/bin"
-    eval "$(rbenv init -)"
-    rbenv install $version
-    [ ! -f "$rbehome/version" ] && rbenv global $version
-  fi
+function .starwars() {
+  telnet towel.blinkenlights.nl
+  clear
 }
 
-function .install-neovim-user() {
-  cd ~/tmp/ || return 1
-  [[ -d neovim ]] && rm -rf neovim
-  git clone https://github.com/neovim/neovim neovim || return 1
-  cd neovim || return 1
-  cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$HOME/nvim -DENABLE_JEMALLOC=ON || return 1
-  make || return 1
-  make install
-}
-
-function .install-neovim-system() {
-  cd ~/tmp/ || return 1
-  [[ -d neovim ]] && rm -rf neovim
-  git clone https://github.com/neovim/neovim neovim || return 1
-  cd neovim || return 1
-  cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_JEMALLOC=ON || return 1
-  make || return 1
-  make install
-}
-
-function .jwsconsole() {
-  jnlp=$(echo $HOME/Downloads/*.jnlp | grep -v '\*\.jnlp' | tail -n 1)
-  if [ "x$jnlp" != "x" ]; then
-    javaws $jnlp
-    sleep 10
-    rm $jnlp
-  fi
+function .sysinfo() {
+  echo "sh: $(readlink -f /bin/sh)"
+  echo "Host: $(hostname -f)"
+  echo "Up:  $(uptime)"
+  echo "Load: $(cat /proc/loadavg)"
+  [[ -n "$DISPLAY" ]] && echo "Display: $DISPLAY"
+  echo
+  echo "Users:"
+  echo "---"
+  who
+  echo
+  echo "Logins:"
+  echo "---"
+  last -5adFixw
+  echo
 }
 
 function in_path() {
@@ -371,7 +322,7 @@ function in_path() {
     fi
   fi
   dir=$(echo "$dir" | sed 's_//_/_g')
-  for ((i=0;i<${#PATHA[@]};i++))
+  for ((i=$ARSTART;i<${#PATHA[@]};i++))
   do
     if [[ -x "${PATHA[$i]}/$file" ]]; then
       found=true
@@ -384,6 +335,34 @@ function in_path() {
     fi
   done
   $found
+}
+
+function .rescan_disks() {
+  # rescan for disks
+  local id=''
+  for id in /sys/class/fc_host/*
+  do
+    echo "1" > "$id/issue_lip"
+  done
+  for id in /sys/class/scsi_host/*
+  do
+    echo "- - -" > "$id/scan"
+  done
+  for id in /sys/class/scsi_device/*:*:*:*
+  do
+    echo 1 "$id/device/rescan"
+  done
+}
+
+function .rescan_partitions() {
+  # rescan partitions
+  local path=''
+  local disk=''
+  for path in /sys/block/sd?
+  do
+    disk=$(basename $path)
+    echo 1 > /sys/block/$disk/device/rescan
+  done
 }
 
 fi

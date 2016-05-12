@@ -1,9 +1,16 @@
 # only continue if in an interactive shell
 [[ $- != *i* ]] && return 0
 
+if [ "$COLORTERM" = "gnome-terminal" ] || [ "$COLORTERM" = "xfce4-terminal" ]; then
+    export TERM=xterm-256color
+elif [ "$COLORTERM" = "rxvt-xpm" ]; then
+    export TERM=rxvt-256color
+fi
+
 USEWEMUX=false
 
 if [[ "$HOSTNAME" != "${worklaptop}" ]]; then
+  clear
   .sysinfo
 fi
 if [[ -n "$TMUX" ]] ; then
@@ -12,6 +19,9 @@ fi
 
 # don't continue if you are in a screen session!
 [[ $TERM =~ ^screen ]] && return 0
+
+# if there where other reasons to disable tmux...stop here
+[[ -n "$NOTMUX" ]] && return 0
 
 # only continue if tmux is there
 which tmux &>/dev/null || return 0
@@ -73,12 +83,12 @@ if [[ -z "$TMUX" ]] ; then
   fi
   if [[ -z "$BYOBU_BACKEND" ]] ; then
     if ! _ssh_workstation ; then
-      exit
+      exit 0
     elif [[ $UID -ne 0 ]]; then
-      exit
+      exit 0
     elif ( type -a byobu &>/dev/null ) ; then
       if [[ ! -e /root/.notmux ]]; then
-        exit
+        exit 0
       fi
     fi
   fi
