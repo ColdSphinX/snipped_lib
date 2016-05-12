@@ -1,4 +1,4 @@
-SH=$(basename $0)
+SH=$(basename ${0/-/})
 #[[ "$SHELL" = "/bin/bash" && -z "$BASH_VERSION" ]] && SH=dash
 
 case $SH in
